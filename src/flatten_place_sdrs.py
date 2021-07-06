@@ -3,7 +3,6 @@ import argparse
 import csv
 from pathlib2 import Path
 
-
 PLACENAME_FIELD = "Placename"
 SCORES = {
     1: "[This feature is shown in this source but in a different place than the synthesized data.]",
@@ -96,8 +95,7 @@ fields = [PLACENAME_FIELD] + sdr_fields([f.name for f in arcpy.ListFields(shapef
 if len(fields) <= 1:
     exit("No SDR fields to process.")
 
-placename_sdr_rows = []
-seen = set()
+placename_sdr_dict = {}
 with open(csvfile, "w") as csvhandle:
     csvwriter = csv.writer(csvhandle, lineterminator="\n")
     csvwriter.writerow(["id_placename", "id_sdr", "location"])
@@ -108,14 +106,21 @@ with open(csvfile, "w") as csvhandle:
             for position, field in enumerate(fields):
                 id_sdr = get_sdr_id(field)
                 score = row[position]
-                if score in SCORES.keys():
-                    placename_sdr_row = (id_placename, id_sdr)
-                    # If the same place/sdr combination occurs twice with different scores,
-                    # e.g. (96,191,2) and (96,191,1), only the first entry will be written
-                    if placename_sdr_row not in seen:
-                        seen.add(placename_sdr_row)
-                        placename_sdr_rows.append(placename_sdr_row + (score,))
+                # If the same place/sdr combination occurs twice with different scores,
+                # e.g. (96,191,2) and (96,191,1), the entry with the highest score will be written
+                if score in SCORES.keys() and (
+                    (
+                        (id_placename, id_sdr) in placename_sdr_dict
+                        and score > placename_sdr_dict[(id_placename, id_sdr)]
+                    )
+                    or (id_placename, id_sdr) not in placename_sdr_dict
+                ):
+                    placename_sdr_dict[(id_placename, id_sdr)] = score
 
+    placename_sdr_rows = [
+        (id_placename, id_sdr, score)
+        for (id_placename, id_sdr), score in placename_sdr_dict.items()
+    ]
     csvwriter.writerows(placename_sdr_rows)
 
 if options["database"]:
