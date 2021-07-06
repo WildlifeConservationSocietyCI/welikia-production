@@ -29,19 +29,24 @@ A csv will be output in the same location with same base name as the shapefile, 
 If a `-d --database` argument is supplied, the placename/sdr/score data will be written to the `placename_location` table of the database. An `UPDATE` will be used if the placename/sdr combination already exists, and the score text will be appended; if the combination does not exist, an `INSERT` (with `canonical = TRUE`) will be used.
 
 ```
-usage: flatten_place_sdrs.py [-h] [-d] [-c CSV] shapefile
+usage: flatten_place_sdrs.py [-h] [-f SDRFIELD] [-d] [-c CSV] shapefile
 
 positional arguments:
-  shapefile          Path to input placename features shapefile
+  shapefile             Path to input placename features shapefile
 
 optional arguments:
-  -h, --help         show this help message and exit
-  -d, --database     Write location records to database directly, in addition
-                     to outputting csv. To use this option, database
-                     credentials must be specified in a config file as
-                     detailed in the README. (default: False)
-  -c CSV, --csv CSV  Path to output csv. If not specified, shapefile basename
-                     and location will be used. (default: None)
+  -h, --help            show this help message and exit
+  -f SDRFIELD, --sdrfield SDRFIELD
+                        Name of single field containing SDR ids, to be written
+                        with DEFAULT_SCORE. If not specified, all fields
+                        ending in `_x` where `x` is an SDR integer id will be
+                        used, and assumed to contain scores. (default: None)
+  -d, --database        Write location records to database directly, in
+                        addition to outputting csv. To use this option,
+                        database credentials must be specified in a config
+                        file as detailed in the README. (default: False)
+  -c CSV, --csv CSV     Path to output csv. If not specified, shapefile
+                        basename and location will be used. (default: None)
 ```
 
 ### other notes
