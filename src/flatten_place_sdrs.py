@@ -158,7 +158,7 @@ with open(csvfile, "w") as csvhandle:
                 if id_sdr and id_sdr != 0 and score and score != 0:
                     # If the same place/sdr combination occurs twice with different scores,
                     # e.g. (96,191,2) and (96,191,1), the entry with the highest score will be written
-                    if score in SCORES.keys() and (
+                    if score in SCORES.keys() and id_placename != 0 and (
                         (
                             (id_placename, id_sdr) in placename_sdr_dict
                             and score > placename_sdr_dict[(id_placename, id_sdr)]
