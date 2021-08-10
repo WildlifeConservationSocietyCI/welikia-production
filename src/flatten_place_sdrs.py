@@ -3,7 +3,7 @@ import argparse
 import csv
 from pathlib2 import Path
 
-PLACENAME_FIELD = "placename"
+PLACENAME_FIELD = "Place_ID"
 SCORES = {
     1: "[This feature is shown in this source but in a different place than the synthesized data.]",
     2: "[This feature is shown in the synthesized data similar to this source.]",
@@ -63,9 +63,13 @@ def ids_from_fields(fields, row):
 
 
 def id_from_val(row):
-    id_sdr = row[1]
-    score = DEFAULT_SCORE
-    return [(id_sdr, score)]
+    try:
+        id_sdr = int(row[1])
+        score = DEFAULT_SCORE
+        return [(id_sdr, score)]
+    except ValueError as e:
+        pass  # not numeric
+    return [(None, None)]
 
 
 def get_rowcount(cursor, query):
