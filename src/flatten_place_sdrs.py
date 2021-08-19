@@ -202,7 +202,18 @@ if options["database"]:
         if sdrcount < 1:
             missing_sdrs.append(id_sdr)
 
-        if pncount > 0 and sdrcount > 0:
+    if len(missing_placenames) > 0:
+        print("missing placename ids:")
+        print("\n".join(set([str(p) for p in missing_placenames])))
+    if len(missing_sdrs) > 0:
+        print("missing SDR ids:")
+        print("\n".join(set([str(s) for s in missing_sdrs])))
+
+    if len(missing_placenames) == 0 and len(missing_sdrs) == 0:
+        for locationrow in placename_sdr_rows:
+            id_placename = locationrow[0]
+            id_sdr = locationrow[1]
+
             location_query = "SELECT * FROM {} WHERE id_placename = {} AND id_sdr = {}".format(
                 DBTABLE, id_placename, id_sdr
             )
@@ -224,10 +235,3 @@ if options["database"]:
             print(query)
             mysql_cursor.execute(query)
             conn.commit()
-
-    if len(missing_placenames) > 0:
-        print("missing placename ids:")
-        print("\n".join([str(p) for p in missing_placenames]))
-    if len(missing_sdrs) > 0:
-        print("missing SDR ids:")
-        print("\n".join([str(s) for s in missing_sdrs]))
