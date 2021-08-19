@@ -3,7 +3,6 @@ import argparse
 import csv
 from pathlib2 import Path
 
-PLACENAME_FIELD = "Place_ID"
 SCORES = {
     1: "[This feature is shown in this source but in a different place than the synthesized data.]",
     2: "[This feature is shown in the synthesized data similar to this source.]",
@@ -44,8 +43,8 @@ def sdr_fields(fields):
     return return_fields
 
 
-def get_placename_field_label(shp_fields):
-    variants = [PLACENAME_FIELD, PLACENAME_FIELD.upper(), PLACENAME_FIELD.capitalize()]
+def get_placename_field_label(shp_fields, label):
+    variants = [label, label.upper(), label.capitalize()]
     for variant in variants:
         if variant in shp_fields:
             return variant
@@ -91,6 +90,12 @@ parser.add_argument(
     "will be used, and assumed to contain scores.",
 )
 parser.add_argument(
+    "-p",
+    "--placenamelabel",
+    default="Place_ID",
+    help="label to use for placename attribute in shapefile",
+)
+parser.add_argument(
     "-d",
     "--database",
     action="store_true",
@@ -106,6 +111,7 @@ parser.add_argument(
 options = vars(parser.parse_args())
 shapefile = options.get("shapefile")
 sdrfield = options.get("sdrfield")
+placenamelabel = options.get("placenamelabel")
 csvfile = options.get("csv") or str(Path(shapefile).with_suffix(".csv"))
 
 if options["database"]:
@@ -136,7 +142,7 @@ if options["database"]:
     mysql_cursor = conn.cursor()
 
 shp_fields = [f.name for f in arcpy.ListFields(shapefile)]
-placename_field = get_placename_field_label(shp_fields)
+placename_field = get_placename_field_label(shp_fields, placenamelabel)
 fields = [placename_field] + sdr_fields(shp_fields)
 if sdrfield:
     if sdrfield not in shp_fields:
@@ -210,7 +216,7 @@ if options["database"]:
                 )
             else:
                 query = (
-                    "INSERT INTO {} (id_placename, id_sdr, location, canonical) "
+                    "INSERT INTO {} (id_placename, id_sdr, location, output_use) "
                     "VALUES ({}, {}, '{}', 1)".format(
                         DBTABLE, id_placename, id_sdr, SCORES[locationrow[2]]
                     )
