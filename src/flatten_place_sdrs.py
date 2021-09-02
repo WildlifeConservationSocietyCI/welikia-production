@@ -1,6 +1,7 @@
 import arcpy
 import argparse
 import csv
+import time
 from pathlib2 import Path
 
 SCORES = {
@@ -108,11 +109,18 @@ parser.add_argument(
     "--csv",
     help="Path to output csv. If not specified, shapefile basename and location will be used.",
 )
+parser.add_argument(
+    "--force",
+    action="store_true",
+    default=False,
+    help="Write location records to database even if there are missing placename or SDR ids"
+)
 options = vars(parser.parse_args())
 shapefile = options.get("shapefile")
 sdrfield = options.get("sdrfield")
 placenamelabel = options.get("placenamelabel")
 csvfile = options.get("csv") or str(Path(shapefile).with_suffix(".csv"))
+force = options["force"]
 
 if options["database"]:
     import mysql.connector
@@ -202,36 +210,46 @@ if options["database"]:
         if sdrcount < 1:
             missing_sdrs.append(id_sdr)
 
+    missing_placenames = list(set(missing_placenames))
+    missing_sdrs = list(set(missing_sdrs))
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    logname = "{}_{}.log".format(timestr, Path(shapefile).stem)
+    logfile = str(Path(shapefile).parent.joinpath(logname))
     if len(missing_placenames) > 0:
-        print("missing placename ids:")
-        print("\n".join(set([str(p) for p in missing_placenames])))
+        with open(logfile, "w") as log:
+            log.write("missing placename ids:\n")
+            log.write("\n".join([str(p) for p in missing_placenames]))
     if len(missing_sdrs) > 0:
-        print("missing SDR ids:")
-        print("\n".join(set([str(s) for s in missing_sdrs])))
+        with open(logfile, "a") as log:
+            log.write("missing SDR ids:\n")
+            log.write("\n".join([str(s) for s in missing_sdrs]))
 
-    if len(missing_placenames) == 0 and len(missing_sdrs) == 0:
-        for locationrow in placename_sdr_rows:
-            id_placename = locationrow[0]
-            id_sdr = locationrow[1]
+    if force or (len(missing_placenames) == 0 and len(missing_sdrs) == 0):
+        with open(logfile, "a") as log:
+            log.write("db queries:\n")
+            for locationrow in placename_sdr_rows:
+                id_placename = locationrow[0]
+                id_sdr = locationrow[1]
 
-            location_query = "SELECT * FROM {} WHERE id_placename = {} AND id_sdr = {}".format(
-                DBTABLE, id_placename, id_sdr
-            )
-            locationcount = get_rowcount(mysql_cursor, location_query)
-            if locationcount > 0:
-                query = (
-                    "UPDATE {} SET location = CONCAT_WS(CHAR(13), location, '{}') WHERE "
-                    "id_placename = {} AND id_sdr = {}".format(
-                        DBTABLE, SCORES[locationrow[2]], id_placename, id_sdr
+                if id_placename not in missing_placenames and id_sdr not in missing_sdrs:
+                    location_query = "SELECT * FROM {} WHERE id_placename = {} AND id_sdr = {}".format(
+                        DBTABLE, id_placename, id_sdr
                     )
-                )
-            else:
-                query = (
-                    "INSERT INTO {} (id_placename, id_sdr, location, output_use) "
-                    "VALUES ({}, {}, '{}', 1)".format(
-                        DBTABLE, id_placename, id_sdr, SCORES[locationrow[2]]
-                    )
-                )
-            print(query)
-            mysql_cursor.execute(query)
-            conn.commit()
+                    locationcount = get_rowcount(mysql_cursor, location_query)
+                    if locationcount > 0:
+                        query = (
+                            "UPDATE {} SET location = CONCAT_WS(CHAR(13), location, '{}') WHERE "
+                            "id_placename = {} AND id_sdr = {}".format(
+                                DBTABLE, SCORES[locationrow[2]], id_placename, id_sdr
+                            )
+                        )
+                    else:
+                        query = (
+                            "INSERT INTO {} (id_placename, id_sdr, location, output_use) "
+                            "VALUES ({}, {}, '{}', 1)".format(
+                                DBTABLE, id_placename, id_sdr, SCORES[locationrow[2]]
+                            )
+                        )
+                    log.write("{}\n".format(query))
+                    mysql_cursor.execute(query)
+                    conn.commit()
