@@ -87,7 +87,7 @@ while plate < plates:
                             UTMy = Y1
                             Startx = X1
                             Starty = Y1
-                            Endx = X1
+                            Endx = X2
                             Endy = Y1
                         elif c == "UR":
                             UTMx = X2
@@ -95,20 +95,20 @@ while plate < plates:
                             Startx = X2
                             Starty = Y1
                             Endx = X2
-                            Endy = Y1
+                            Endy = Y2
                         elif c == "LL":
                             UTMx = X1
                             UTMy = Y2
                             Startx = X1
                             Starty = Y2
                             Endx = X1
-                            Endy = Y2
+                            Endy = Y1
                         else:
                             UTMx = X2
                             UTMy = Y2
                             Startx = X2
                             Starty = Y2
-                            Endx = X2
+                            Endx = X1
                             Endy = Y2
                         d.append(
                                     # {"{}{}{}".format(plate,num,ltr) :
