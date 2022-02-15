@@ -8,7 +8,8 @@ PROJECT_DIR = r"C:\Users\jesse\PycharmProjects\grid_calculator"
 OUT_DIR = os.path.join(PROJECT_DIR, "csv")
 date = date.today().strftime("%Y-%m-%d")
 UTM_ZONE = "zone18N"
-csv_filename = os.path.join(OUT_DIR, "welikia_atlas_grid_coordinates_{}_{}.csv".format(UTM_ZONE, date))
+grid_corners_filename = os.path.join(OUT_DIR, "welikia_atlas_grid_coordinates_{}_{}.csv".format(UTM_ZONE, date))
+center_points_filename = os.path.join(OUT_DIR, "welikia_atlas_grid_center_points_{}_{}.csv".format(UTM_ZONE, date))
 
 # PARAMETERS
 
@@ -63,6 +64,8 @@ corner = ["UL", "UR", "LR", "LL"]
 # [X1,Y2]----------[X2,Y2]
 
 d = []
+center_points = []
+
 # X1 = starting_coord[0]
 # X2 = starting_coord[0] + grid_dimension_x
 # Y1 = starting_coord[1]
@@ -81,6 +84,16 @@ while plate < plates:
                 X1 = plate_origin_x
                 X2 = plate_origin_x + grid_dimension_x
                 for ltr in grid_ltr:
+                    center_points.append(
+                                            {
+                                                "Plate": plate,
+                                                "Grid": "{}{}".format(ltr, num),
+                                                "Letter": ltr,
+                                                "Number": num,
+                                                "UTMx": X1 + (grid_dimension_x/2),
+                                                "UTMy": Y1 - (grid_dimension_y/2)
+                                            }
+                                        )
                     for c in corner:
                         if c == "UL":
                             UTMx = X1
@@ -134,5 +147,9 @@ while plate < plates:
             print(plate)
             plate += 1
 
+#save dataframes as csv
 grid_df = pd.DataFrame(d)
-grid_df.to_csv(csv_filename)
+grid_df.to_csv(grid_corners_filename)
+
+center_point_df = pd.DataFrame(center_points)
+center_point_df.to_csv(center_points_filename)
