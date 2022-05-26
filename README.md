@@ -17,7 +17,6 @@ DBPORT=
 DBNAME=  
 DBUSER=  
 DBPASS=  
-DBTABLE=
 ```
 In addition, to reach the production Welikia database, the IP of the machine running the script must be added to the relevant AWS whitelist. 
 
@@ -53,3 +52,35 @@ optional arguments:
 - If multiple shapefile records with the same placename/SDR combination (but potentially different scores) exist, only the first will be used.
 - This script should only be used once per shapefile to update the database; additional runs will cause updates to append multiple copies of the score text.
 - Database inserts set `canonical = 1`; updates do nothing with `canonical` (since there is no way to know which should be canonical).
+
+## place_synthesis
+This script outputs a markdown file that aggregates Welikia place information stored in the welikia.net database (accessed via parameters stored in `.env` over ssh), a shapefile containing plate and grid assignments, and a directory of markdown files, one per place.
+
+### requirements
+- ssh connection to welikia.net database
+- `.env` file in project root (parent of `src`) containing database credentials (see `flatten_place_sdrs` requirements). In addition, to reach the production Welikia database, the IP of the machine running the script must be added to the relevant AWS whitelist.
+- placenames shapefile containing plate and grid data
+- directory (may contain subdirectories) of markdown files, each named with the convention `<anytext>.<place id>.VERSION.md`. `VERSION` is a constant defined at the top of the script.
+
+### using the script
+```
+usage: place_synthesis.py [-h] [-o OUTPUT] shapefile markdown-dir
+
+positional arguments:
+  shapefile             Path to input placename features shapefile
+  markdown-dir          Path to directory of markdown files with place id in each filename
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        Path to output markdown. If not specified, shapefile basename and location will be used. (default: None)
+```
+
+#### example invocation
+`python place_synthesis.py ~/Documents/welikia/placenames/synthesis/Placenames_v7.shp ~/Documents/welikia/placenames/synthesis/markdown_seconddraft`
+
+### other notes
+See `TODO` items throughout the code; in particular, shapefile plate/grid data processing is still needed.
+
+- Output formatting is limited. Whether it's worth considerable development time to improve via code depends on the downstream editing processes.
+- Likewise with handling field data that is not consistent. For example, ordering references chronologically isn't well defined when the year may not be part of the name string. Aggregating reference page numbers is similarly vexed. 

@@ -3,7 +3,10 @@ import argparse
 import csv
 import time
 from pathlib2 import Path
+from includes import extant_file
 
+
+DBTABLE = "placename_location"
 SCORES = {
     1: "[This feature is shown in this source but in a different place than the synthesized data.]",
     2: "[This feature is shown in the synthesized data similar to this source.]",
@@ -16,13 +19,6 @@ class SDRException(Exception):
     def __init__(self, message="No SDR fields to process."):
         self.message = message
         super(SDRException, self).__init__(self.message)
-
-
-def extant_shp(string):
-    if Path(string).is_file():
-        return string
-    else:
-        raise
 
 
 def get_sdr_id(field):
@@ -80,7 +76,7 @@ def get_rowcount(cursor, query):
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(
-    "shapefile", type=extant_shp, help="Path to input placename features shapefile"
+    "shapefile", type=extant_file, help="Path to input placename features shapefile"
 )
 parser.add_argument(
     "-f",
@@ -123,6 +119,7 @@ csvfile = options.get("csv") or str(Path(shapefile).with_suffix(".csv"))
 force = options["force"]
 
 if options["database"]:
+    # TODO: refactor to use Database class
     import mysql.connector
     from dotenv import dotenv_values
 
@@ -133,7 +130,6 @@ if options["database"]:
     DBNAME = config.get("DBNAME")
     DBUSER = config.get("DBUSER")
     DBPASS = config.get("DBPASS")
-    DBTABLE = config.get("DBTABLE")
     if (
         not DBHOST
         or not DBPORT
