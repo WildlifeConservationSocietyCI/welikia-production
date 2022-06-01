@@ -118,13 +118,14 @@ for mdfile in mdfiles:
 places.sort(key=attrgetter("name"))
 # filter by borough
 # brooklyn_places = [p for p in places if "Brooklyn" in p.study_areas]
+places = [p for p in places if p.main_text != ""]   # removes all places without markdown text entry
 # print(brooklyn_places[0])
 
 # TODO:
 #  - Can't right-align plate/grid in markdown
 #  - Move to pypandoc and write to docx and do as much formatting as possible?
 #    Or more useful to output text simply here, for further automated processing externally?
-with outputfile.open("w") as f:
+with outputfile.open("w", encoding='utf-8') as f:
     for place in places:
         entry = f"""
 **{place.output_name}{place.status}** ({", ".join(place.study_areas)})
